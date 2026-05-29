@@ -65,9 +65,27 @@ export default function App() {
 
   // ── Bootstrap ───────────────────────────────────────────────────
   useEffect(() => {
-    getCompanies().then(r => setCompanies(r.data.companies)).catch(() => {})
-    getStats().then(r => setStats(r.data)).catch(() => {})
-    getTopQuestions(20).then(r => setTopQuestions(r.data.results)).catch(() => {})
+    console.log('Bootstrapping: loading companies, stats, and top questions')
+    getCompanies()
+      .then(r => {
+        console.log('Companies loaded:', r.data.companies?.length || 0)
+        setCompanies(r.data.companies)
+      })
+      .catch(err => console.error('Failed to load companies:', err))
+    
+    getStats()
+      .then(r => {
+        console.log('Stats loaded:', r.data)
+        setStats(r.data)
+      })
+      .catch(err => console.error('Failed to load stats:', err))
+    
+    getTopQuestions(20)
+      .then(r => {
+        console.log('Top questions loaded:', r.data.results?.length || 0)
+        setTopQuestions(r.data.results)
+      })
+      .catch(err => console.error('Failed to load top questions:', err))
   }, [])
 
   // ── Search ──────────────────────────────────────────────────────
@@ -98,9 +116,25 @@ export default function App() {
       limit: 60,
     })
       .then(r => {
+        console.log('API response:', r.data)
+        
+        // Verify response structure
+        if (!r.data || typeof r.data !== 'object') {
+          throw new Error('Invalid response format: expected object')
+        }
+        
+        // Handle the actual response structure: { results: [...], count: number }
         const data = r.data.results
+        
+        if (!Array.isArray(data)) {
+          throw new Error(`Invalid results format: expected array, got ${typeof data}`)
+        }
+        
+        console.log(`Received ${data.length} results from API`)
+        
         setResults(data)
         setHasSearched(true)
+        
         // Build suggestions from results for autocomplete
         if (hasQuery && debouncedQuery.trim().length > 1) {
           setSuggestions(data.slice(0, 6))
@@ -109,8 +143,27 @@ export default function App() {
         }
       })
       .catch(err => {
-        if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
+        // Check if this is a network/connection error vs other error
+        const isNetworkError = 
+          err.code === 'ECONNABORTED' ||
+          err.code === 'ENOTFOUND' ||
+          err.message === 'Network Error' ||
+          err.message?.includes('timeout') ||
+          err.response?.status === undefined
+        
+        if (err.name === 'CanceledError' || err.name === 'AbortError') {
+          // Request was cancelled, don't show error
+          console.log('Request cancelled')
+          return
+        }
+        
+        if (isNetworkError) {
+          console.error('Network error:', err)
           setError('Could not reach the backend. Is the API running?')
+        } else {
+          // Data parsing or other error
+          console.error('Error processing API response:', err)
+          setError(`Error: ${err.message}`)
         }
       })
       .finally(() => setIsLoading(false))
