@@ -10,14 +10,14 @@ export default function StatsBar({ stats }) {
         </div>
         <div className="text-xs text-slate-500 mt-0.5">Questions</div>
       </div>
-      <div className="w-px h-8 bg-white/[0.06]" />
+      <div className="w-px h-8 bg-white/6" />
       <div className="text-center">
         <div className="text-xl font-bold text-violet-400">
           {stats.unique_companies?.toLocaleString()}
         </div>
         <div className="text-xs text-slate-500 mt-0.5">Companies</div>
       </div>
-      <div className="w-px h-8 bg-white/[0.06]" />
+      <div className="w-px h-8 bg-white/6" />
       <div className="text-center">
         <div className="text-xl font-bold text-emerald-400">
           {stats.total_entries?.toLocaleString()}

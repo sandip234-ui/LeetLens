@@ -24,7 +24,7 @@ export default function QuestionCard({ question, onClick }) {
   return (
     <div
       onClick={() => onClick?.(question)}
-      className="group relative cursor-pointer rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-sm p-5 transition-all duration-300 hover:border-indigo-500/40 hover:bg-white/[0.06] hover:shadow-[0_0_40px_rgba(99,102,241,0.08)] hover:-translate-y-0.5"
+      className="group relative cursor-pointer rounded-2xl border border-white/6 bg-white/3 backdrop-blur-sm p-5 transition-all duration-300 hover:border-indigo-500/40 hover:bg-white/6 hover:shadow-[0_0_40px_rgba(99,102,241,0.08)] hover:-translate-y-0.5"
       id={`question-card-${question.question_id}`}
     >
       {/* Top row */}
@@ -33,7 +33,7 @@ export default function QuestionCard({ question, onClick }) {
           <span className="shrink-0 text-xs font-mono text-slate-500 bg-slate-800/60 rounded-md px-2 py-0.5">
             #{question.question_id}
           </span>
-          <h3 className="text-sm font-semibold text-slate-100 group-hover:text-white truncate leading-snug">
+          <h3 className="text-sm font-semibold leading-snug truncate text-slate-100 group-hover:text-white">
             {question.title}
           </h3>
         </div>
@@ -81,7 +81,7 @@ export default function QuestionCard({ question, onClick }) {
       )}
 
       {/* Hover glow edge */}
-      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full" />
+      <div className="absolute inset-x-0 bottom-0 h-px transition-opacity duration-300 rounded-full opacity-0 bg-linear-to-r from-transparent via-indigo-500/30 to-transparent group-hover:opacity-100" />
     </div>
   )
 }

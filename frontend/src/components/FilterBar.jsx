@@ -15,7 +15,7 @@ export default function FilterBar({ filters, companies, onChange }) {
   return (
     <div className="flex flex-wrap items-center gap-2" id="filter-bar">
       {/* Difficulty filter */}
-      <div className="flex rounded-xl bg-white/[0.03] border border-white/[0.06] p-0.5 gap-0.5">
+      <div className="flex rounded-xl bg-white/3 border border-white/6 p-0.5 gap-0.5">
         {DIFFICULTIES.map(d => (
           <button
             key={d}
@@ -29,7 +29,7 @@ export default function FilterBar({ filters, companies, onChange }) {
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                   : d === 'Hard'
                   ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                  : 'bg-white/[0.06] text-white border border-white/[0.1]'
+                  : 'bg-white/6 text-white border border-white/1'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -43,7 +43,7 @@ export default function FilterBar({ filters, companies, onChange }) {
         id="filter-timeframe"
         value={timeframe}
         onChange={e => onChange({ timeframe: e.target.value })}
-        className="px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-sm text-slate-300 focus:outline-none focus:border-indigo-500/40 cursor-pointer transition-all"
+        className="px-3 py-2 text-sm transition-all border cursor-pointer rounded-xl bg-white/3 border-white/6 text-slate-300 focus:outline-none focus:border-indigo-500/40"
       >
         {TIMEFRAMES.map(tf => (
           <option key={tf.value} value={tf.value} className="bg-slate-900">
@@ -57,11 +57,11 @@ export default function FilterBar({ filters, companies, onChange }) {
         id="filter-company"
         value={company}
         onChange={e => onChange({ company: e.target.value })}
-        className="px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-sm text-slate-300 focus:outline-none focus:border-indigo-500/40 cursor-pointer transition-all max-w-[160px]"
+        className="px-3 py-2 text-sm transition-all border cursor-pointer rounded-xl bg-white/3 border-white/6 text-slate-300 focus:outline-none focus:border-indigo-500/40 max-w-40"
       >
         <option value="" className="bg-slate-900">All Companies</option>
         {companies.map(c => (
-          <option key={c} value={c} className="bg-slate-900 capitalize">{c}</option>
+          <option key={c} value={c} className="capitalize bg-slate-900">{c}</option>
         ))}
       </select>
 
@@ -70,9 +70,9 @@ export default function FilterBar({ filters, companies, onChange }) {
         <button
           id="filter-reset-btn"
           onClick={() => onChange({ difficulty: '', company: '', timeframe: '' })}
-          className="px-3 py-2 rounded-xl text-xs text-slate-400 hover:text-slate-200 border border-white/[0.06] hover:border-white/[0.1] transition-all"
+          className="px-3 py-2 text-xs transition-all border rounded-xl text-slate-400 hover:text-slate-200 border-white/6 hover:border-white/1"
         >
-          Clear filters
+          Clear filters 
         </button>
       )}
     </div>
