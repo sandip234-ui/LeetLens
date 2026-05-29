@@ -148,7 +148,7 @@ export default function App() {
 
       {/* ── Header ── */}
       <header
-        className="relative sticky top-0 z-20"
+        className="relative top-0 z-20"
         style={{
           borderBottom: '1px solid rgba(255,255,255,0.05)',
           background: 'rgba(6,8,15,0.85)',

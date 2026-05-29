@@ -6,13 +6,6 @@ const DIFFICULTY_STYLES = {
   Hard:   { badge: 'badge-hard', bar: 'bg-rose-400', text: 'text-rose-400' },
 }
 
-const TIMEFRAME_LABEL = {
-  '6months': '6 Months',
-  '1year':   '1 Year',
-  '2years':  '2 Years',
-  alltime:   'All Time',
-}
-
 export default function QuestionModal({ question, onClose }) {
   const [showTooltip, setShowTooltip] = useState(false)
   
@@ -31,23 +24,32 @@ export default function QuestionModal({ question, onClose }) {
     return () => { document.body.style.overflow = '' }
   }, [])
 
-  // Group companies by timeframe
-  const byTimeframe = {}
-  for (const c of question.companies || []) {
-    const tf = c.timeframe || 'unknown'
-    if (!byTimeframe[tf]) byTimeframe[tf] = []
-    byTimeframe[tf].push(c)
+  // Helper function to format frequency intelligently
+  const formatFrequency = (score) => {
+    if (score >= 1) {
+      return parseFloat(score.toFixed(1)).toString()
+    } else {
+      return parseFloat(score.toFixed(2)).toString()
+    }
   }
 
-  const timeframeOrder = ['6months', '1year', '2years', 'alltime']
-  const sortedTimeframes = Object.keys(byTimeframe).sort(
-    (a, b) => (timeframeOrder.indexOf(a) - timeframeOrder.indexOf(b))
-  )
+  // Aggregate companies across all timeframes
+  const aggregatedCompanies = {}
+  for (const c of question.companies || []) {
+    const company = c.company || 'Unknown'
+    if (!aggregatedCompanies[company]) {
+      aggregatedCompanies[company] = 0
+    }
+    aggregatedCompanies[company] += (c.frequency || 0)
+  }
 
-  const maxFreq = Math.max(
-    ...Object.values(byTimeframe).flat().map(c => c.frequency || 0),
-    0.01
-  )
+  // Convert to array, filter out zero values, and sort by frequency descending
+  const sortedCompanies = Object.entries(aggregatedCompanies)
+    .map(([company, frequency]) => ({ company, frequency }))
+    .filter(c => c.frequency > 0)
+    .sort((a, b) => b.frequency - a.frequency)
+
+  const maxFreq = Math.max(...sortedCompanies.map(c => c.frequency), 0.01)
 
   return (
     <div
@@ -131,14 +133,14 @@ export default function QuestionModal({ question, onClose }) {
             </div>
           </div>
 
-          {/* Companies by timeframe */}
+          {/* Companies section */}
           <div>
-            <div className="section-heading mb-4 relative">
+            <div className="section-heading mb-2 relative">
               <svg className="w-4 h-4 text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
-              <h3 className="text-sm font-semibold text-slate-200">Companies Asking This</h3>
+              <h3 className="text-sm font-semibold text-slate-200">Top Companies Asking This</h3>
               <button
                 onMouseEnter={() => setShowTooltip(true)}
                 onMouseLeave={() => setShowTooltip(false)}
@@ -167,40 +169,31 @@ export default function QuestionModal({ question, onClose }) {
               )}
             </div>
 
-            <div className="space-y-5">
-              {sortedTimeframes.map(tf => (
-                <div key={tf}>
-                  <div
-                    className="text-[10px] font-semibold tracking-widest uppercase mb-2.5 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md"
-                    style={{ color: '#818cf8', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}
+            {/* Context label */}
+            <div className="text-[11px] text-slate-500 mb-3.5 tracking-wide">
+              Frequency Score • Higher = asked more often
+            </div>
+
+            <div className="space-y-2">
+              {sortedCompanies.map((c, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold text-slate-400"
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
                   >
-                    {TIMEFRAME_LABEL[tf] || tf}
+                    {c.company?.[0]?.toUpperCase()}
                   </div>
-                  <div className="space-y-2">
-                    {byTimeframe[tf]
-                      .sort((a, b) => b.frequency - a.frequency)
-                      .map((c, i) => (
-                        <div key={i} className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold text-slate-400"
-                            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
-                          >
-                            {c.company?.[0]?.toUpperCase()}
-                          </div>
-                          <span className="w-28 text-sm capitalize text-slate-200 shrink-0 truncate">{c.company}</span>
-                          <div className="flex-1 h-1.5 rounded-full overflow-hidden"
-                            style={{ background: 'rgba(255,255,255,0.06)' }}
-                          >
-                            <div
-                              className={`h-full ${styles.bar} rounded-full transition-all duration-700`}
-                              style={{ width: `${Math.min((c.frequency / maxFreq) * 100, 100)}%` }}
-                            />
-                          </div>
-                          <span className="w-12 font-mono text-xs text-right text-slate-500 shrink-0">
-                            {(c.frequency * 100).toFixed(1)}%
-                          </span>
-                        </div>
-                      ))}
+                  <span className="w-28 text-sm capitalize text-slate-200 shrink-0 truncate">{c.company}</span>
+                  <div className="flex-1 h-1.5 rounded-full overflow-hidden"
+                    style={{ background: 'rgba(255,255,255,0.06)' }}
+                  >
+                    <div
+                      className={`h-full ${styles.bar} rounded-full transition-all duration-700`}
+                      style={{ width: `${Math.min((c.frequency / maxFreq) * 100, 100)}%` }}
+                    />
                   </div>
+                  <span className="w-12 font-mono text-xs text-right text-slate-500 shrink-0">
+                    {formatFrequency(c.frequency)}
+                  </span>
                 </div>
               ))}
             </div>
