@@ -1,0 +1,19 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Database
+*.db
+!backend/data/leetlens.db
+
+# Mac
+.DS_Store
+
+# Frontend
+node_modules/
+dist/
+build/
+
+# Env
+.env
