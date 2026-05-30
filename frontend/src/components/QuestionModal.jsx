@@ -34,26 +34,39 @@ export default function QuestionModal({ question, onClose }) {
   }
 
   // Aggregate companies across all timeframes
+  // Never filter by frequency—all companies in the API response are valid
   const aggregatedCompanies = {}
-  for (const c of question.companies || []) {
-    const company = c.company || 'Unknown'
-    if (!aggregatedCompanies[company]) {
-      aggregatedCompanies[company] = 0
+  
+  // Defensive checks: handle undefined/null/malformed data
+  const companiesList = question.companies || []
+  if (Array.isArray(companiesList)) {
+    for (const c of companiesList) {
+      if (!c || typeof c !== 'object') continue
+      
+      const company = (c.company || 'Unknown').toString().trim()
+      const freq = typeof c.frequency === 'number' ? c.frequency : 0
+      
+      if (!aggregatedCompanies[company]) {
+        aggregatedCompanies[company] = 0
+      }
+      aggregatedCompanies[company] += freq
     }
-    aggregatedCompanies[company] += (c.frequency || 0)
   }
 
-  // Convert to array, filter out zero values, and sort by frequency descending
+  // Convert to array and sort by combined frequency descending (highest first)
+  // NO FILTERING by frequency—include all companies, even those with frequency = 0
   const sortedCompanies = Object.entries(aggregatedCompanies)
     .map(([company, frequency]) => ({ company, frequency }))
-    .filter(c => c.frequency > 0)
     .sort((a, b) => b.frequency - a.frequency)
 
-  const maxFreq = Math.max(...sortedCompanies.map(c => c.frequency), 0.01)
+  // Handle maxFreq safely when all frequencies are 0 or empty
+  const maxFreq = sortedCompanies.length > 0 
+    ? Math.max(...sortedCompanies.map(c => c.frequency), 0.01)
+    : 0.01
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 modal-enter"
+      className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4 modal-enter"
       style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(16px)' }}
       onClick={onClose}
       id="question-modal-overlay"
@@ -76,14 +89,14 @@ export default function QuestionModal({ question, onClose }) {
 
         {/* Header */}
         <div
-          className="sticky top-0 px-6 py-4 flex items-start justify-between gap-4"
+          className="sticky top-0 flex items-start justify-between gap-4 px-6 py-4"
           style={{
             background: 'rgba(10, 13, 20, 0.98)',
             borderBottom: '1px solid rgba(255,255,255,0.06)',
             backdropFilter: 'blur(12px)',
           }}
         >
-          <div className="min-w-0 flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
               <span className="font-mono text-xs text-slate-500 bg-slate-800/60 px-1.5 py-0.5 rounded border border-slate-700/50">
                 #{question.question_id}
@@ -96,7 +109,7 @@ export default function QuestionModal({ question, onClose }) {
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl transition-all duration-150 shrink-0 text-slate-500 hover:text-white hover:bg-white/8"
+            className="p-2 transition-all duration-150 rounded-xl shrink-0 text-slate-500 hover:text-white hover:bg-white/8"
             id="modal-close-btn"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -135,7 +148,7 @@ export default function QuestionModal({ question, onClose }) {
 
           {/* Companies section */}
           <div>
-            <div className="section-heading mb-2 relative">
+            <div className="relative mb-2 section-heading">
               <svg className="w-4 h-4 text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -145,7 +158,7 @@ export default function QuestionModal({ question, onClose }) {
                 onMouseEnter={() => setShowTooltip(true)}
                 onMouseLeave={() => setShowTooltip(false)}
                 onClick={() => setShowTooltip(!showTooltip)}
-                className="ml-2 w-4 h-4 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-300 transition-colors duration-150 shrink-0 text-xs font-bold"
+                className="flex items-center justify-center w-4 h-4 ml-2 text-xs font-bold transition-colors duration-150 rounded-full text-slate-500 hover:text-slate-300 shrink-0"
                 style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
                 aria-label="Frequency score information"
               >
@@ -153,7 +166,7 @@ export default function QuestionModal({ question, onClose }) {
               </button>
               {showTooltip && (
                 <div
-                  className="absolute top-full left-0 mt-2 z-50 p-3 rounded-lg text-xs text-slate-200 w-48"
+                  className="absolute left-0 z-50 w-48 p-3 mt-2 text-xs rounded-lg top-full text-slate-200"
                   style={{
                     background: 'rgba(20, 24, 35, 0.95)',
                     border: '1px solid rgba(255,255,255,0.08)',
@@ -174,29 +187,45 @@ export default function QuestionModal({ question, onClose }) {
               Frequency Score • Higher = asked more often
             </div>
 
-            <div className="space-y-2">
-              {sortedCompanies.map((c, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold text-slate-400"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
-                  >
-                    {c.company?.[0]?.toUpperCase()}
-                  </div>
-                  <span className="w-28 text-sm capitalize text-slate-200 shrink-0 truncate">{c.company}</span>
-                  <div className="flex-1 h-1.5 rounded-full overflow-hidden"
-                    style={{ background: 'rgba(255,255,255,0.06)' }}
-                  >
-                    <div
-                      className={`h-full ${styles.bar} rounded-full transition-all duration-700`}
-                      style={{ width: `${Math.min((c.frequency / maxFreq) * 100, 100)}%` }}
-                    />
-                  </div>
-                  <span className="w-12 font-mono text-xs text-right text-slate-500 shrink-0">
-                    {formatFrequency(c.frequency)}
-                  </span>
-                </div>
-              ))}
-            </div>
+            {sortedCompanies.length === 0 ? (
+              <div className="p-4 text-sm text-center rounded-lg text-slate-400"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                No company frequency data available
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {sortedCompanies.map((c, i) => {
+                  // Calculate bar width: for zero frequencies, use minimal visible width (3px)
+                  // For non-zero, scale based on maxFreq
+                  const barWidth = c.frequency === 0 
+                    ? 3 
+                    : Math.min((c.frequency / maxFreq) * 100, 100)
+                  
+                  return (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="flex items-center justify-center w-8 h-8 text-xs font-bold rounded-lg shrink-0 text-slate-400"
+                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+                      >
+                        {c.company?.[0]?.toUpperCase() || '?'}
+                      </div>
+                      <span className="text-sm capitalize truncate w-28 text-slate-200 shrink-0">{c.company}</span>
+                      <div className="flex-1 h-1.5 rounded-full overflow-hidden"
+                        style={{ background: 'rgba(255,255,255,0.06)' }}
+                      >
+                        <div
+                          className={`h-full ${styles.bar} rounded-full transition-all duration-700`}
+                          style={{ width: `${barWidth}%`, minWidth: c.frequency === 0 ? '3px' : '0px' }}
+                        />
+                      </div>
+                      <span className="w-12 font-mono text-xs text-right text-slate-500 shrink-0">
+                        {formatFrequency(c.frequency)}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           {/* LeetCode link */}
